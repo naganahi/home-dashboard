@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
+<meta name="theme-color" content="#0b0f14" />
+<title>Home Dashboard</title>
+<style>
+  :root{
+    --bg:#0b0f14;
+    --panel:#121922;
+    --panel2:#0f151d;
+    --text:#f4f7fb;
+    --muted:#8f9baa;
+    --line:#26303b;
+    --accent:#69b7ff;
+    --good:#8bd49c;
+    --warn:#ffcf70;
+    --danger:#ff8f8f;
+    --radius:18px;
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;width:100%;height:100%;overflow:hidden;background:var(--bg);color:var(--text);
+    font-family:system-ui,-apple-system,"Noto Sans JP","Yu Gothic UI","Hiragino Sans",sans-serif}
+  body{padding:16px}
+  .app{
+    width:100%; height:100%;
+    display:grid;
+    grid-template-columns: 58% 42%;
+    gap:14px;
+  }
+  .left,.right{min-width:0;display:grid;gap:14px}
+  .left{grid-template-rows: minmax(0,26fr) minmax(0,44fr) minmax(0,30fr)}
+  .right{grid-template-rows: minmax(0,48fr) minmax(0,34fr) minmax(0,18fr)}
+  .card{
+    min-height:0;
+    background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:16px 18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,.18);
+  }
+  .top{
+    display:grid;
+    grid-template-columns:140px 1fr;
+    align-items:center;
+    gap:18px;
+  }
+  .clock{
+    width:124px;height:124px;border-radius:50%;
+    position:relative;margin:auto;
+    border:2px solid #3d4a57;
+    background:radial-gradient(circle at 45% 35%,#18222d,#0b0f14 68%);
+  }
+  .clock::after{content:"";position:absolute;width:9px;height:9px;border-radius:50%;
+    background:#fff;left:50%;top:50%;transform:translate(-50%,-50%);z-index:9}
+  .hand{position:absolute;left:50%;bottom:50%;transform-origin:50% 100%;border-radius:4px}
+  .hour{width:4px;height:31px;background:#e7edf4;margin-left:-2px}
+  .minute{width:3px;height:43px;background:#d2dbe5;margin-left:-1.5px}
+  .second{width:2px;height:47px;background:var(--accent);margin-left:-1px}
+  .tick{position:absolute;left:50%;top:50%;width:2px;height:48%;transform-origin:50% 0}
+  .tick::before{content:"";position:absolute;top:-44px;left:-1px;width:2px;height:7px;background:#52606d;border-radius:2px}
+  .tick.major::before{height:11px;background:#9aa6b2;width:3px;left:-1.5px}
+  .date{font-size:20px;color:#c6d0db;letter-spacing:.04em;margin-bottom:1px}
+  .time{font-size:54px;font-weight:650;letter-spacing:.05em;line-height:1.05;font-variant-numeric:tabular-nums}
+  .seconds{font-size:.52em;color:var(--muted);font-weight:500}
+  .weekday{font-size:17px;color:var(--muted);margin-top:5px}
+  .calendar-wrap{display:grid;grid-template-columns:1fr 1fr;gap:18px;height:100%}
+  .month-title{font-size:18px;font-weight:650;margin:0 0 10px 4px}
+  table{width:100%;border-collapse:collapse;table-layout:fixed}
+  th{font-size:12px;color:var(--muted);font-weight:600;height:24px}
+  td{text-align:center;font-size:14px;height:29px;border-radius:8px;color:#d7dee6}
+  td.sun,th.sun{color:#ff9696}
+  td.sat,th.sat{color:#84bfff}
+  td.today{background:#dfe9f3;color:#10151b;font-weight:800}
+  td.other{color:#4e5966}
+  .section-title{
+    display:flex;align-items:center;justify-content:space-between;
+    font-size:17px;font-weight:700;margin-bottom:11px
+  }
+  .section-title small{font-size:12px;color:var(--muted);font-weight:500}
+  .weather-main{display:grid;grid-template-columns:1.15fr .9fr;gap:14px;height:calc(100% - 28px);min-height:0}
+  .weather-now{display:flex;align-items:center;gap:16px}
+  .wx-icon{font-size:48px;width:56px;text-align:center}
+  .temp{font-size:43px;font-weight:700;line-height:1}
+  .condition{font-size:16px;color:#d9e1e9;margin-top:6px}
+  .meta{margin-top:8px;color:var(--muted);font-size:13px}
+  .forecast{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;align-items:stretch;min-height:0}
+  .day{background:#0c1219;border:1px solid #222c36;border-radius:13px;padding:9px;text-align:center}
+  .day .d{font-size:12px;color:var(--muted)}
+  .day .i{font-size:25px;margin:4px 0}
+  .day .t{font-size:13px;font-weight:650}
+  .list{display:flex;flex-direction:column;gap:9px}
+  .item{
+    display:grid;grid-template-columns:62px 1fr;gap:10px;align-items:start;
+    padding:10px 11px;border-radius:12px;background:#0c1219;border:1px solid #222c36
+  }
+  .item .when{color:var(--accent);font-size:13px;font-weight:700;font-variant-numeric:tabular-nums}
+  .item .what{font-size:14px;line-height:1.35}
+  .item .sub{color:var(--muted);font-size:11px;margin-top:3px}
+  .empty{display:grid;place-items:center;color:var(--muted);height:80%;font-size:14px;text-align:center;padding:20px}
+  .tasks .item{grid-template-columns:22px 1fr;padding:8px 10px}
+  .check{width:15px;height:15px;border-radius:50%;border:2px solid #657382;margin-top:2px}
+  .done .check{border-color:var(--good);background:var(--good);box-shadow:inset 0 0 0 3px #0c1219}
+  .done .what{text-decoration:line-through;color:#788491}
+  button{
+    background:#19232e;border:1px solid #344252;color:#dce6ef;border-radius:10px;padding:6px 10px;
+    font-size:12px
+  }
+  .ticker{height:100%;display:flex;align-items:center;gap:12px;white-space:nowrap;overflow:hidden}
+  .ticker .label{background:#e7eef5;color:#111821;font-weight:800;border-radius:999px;padding:6px 10px;font-size:11px}
+  .ticker .text{font-size:13px;color:#cfd7df;overflow:hidden;text-overflow:ellipsis}
+  .status{
+    position:fixed;right:21px;bottom:8px;font-size:10px;color:#53606d
+  }
+  .modal{
+    display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:20;align-items:center;justify-content:center;padding:24px
+  }
+  .modal.show{display:flex}
+  .editor{width:min(700px,92vw);background:#101720;border:1px solid #33404c;border-radius:18px;padding:18px}
+  .editor h3{margin:0 0 12px}
+  textarea{
+    width:100%;height:260px;background:#090e13;color:#eef3f8;border:1px solid #2c3742;border-radius:12px;
+    padding:12px;font:14px/1.55 ui-monospace,SFMono-Regular,Consolas,monospace;resize:none
+  }
+  .editor-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:12px}
+  @media (max-width:900px){
+    body{padding:10px}
+    .app{grid-template-columns:1fr}
+    .right{display:none}
+  }
+
+  /* v3: scroll only inside schedule/study cards */
+  .right > .card:nth-child(1),
+  .right > .card:nth-child(2){
+    display:flex;
+    flex-direction:column;
+    min-height:0;
+  }
+  .right > .card:nth-child(1) .list,
+  .right > .card:nth-child(2) .list{
+    flex:1 1 auto;
+    min-height:0;
+    overflow-y:auto;
+    overflow-x:hidden;
+    -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain;
+    padding-right:2px;
+    scrollbar-width:none;
+  }
+  .right > .card:nth-child(1) .list::-webkit-scrollbar,
+  .right > .card:nth-child(2) .list::-webkit-scrollbar{
+    display:none;
+  }
+
+</style>
+</head>
+<body>
+<div class="app">
+  <section class="left">
+    <div class="card top">
+      <div class="clock" id="analog"></div>
+      <div>
+        <div class="date" id="date"></div>
+        <div class="time"><span id="hhmm"></span><span class="seconds" id="ss"></span></div>
+        <div class="weekday" id="weekday"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="calendar-wrap" id="calendars"></div>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <span>大阪の天気</span>
+        <small id="weather-updated">取得中…</small>
+      </div>
+      <div class="weather-main">
+        <div class="weather-now">
+          <div class="wx-icon" id="wx-icon">—</div>
+          <div>
+            <div class="temp" id="temp">--°</div>
+            <div class="condition" id="condition">天気を取得しています</div>
+            <div class="meta" id="weather-meta"></div>
+          </div>
+        </div>
+        <div class="forecast" id="forecast"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="right">
+    <div class="card">
+      <div class="section-title">
+        <span>今日の予定</span>
+        <button onclick="openEditor('schedule')">編集</button>
+      </div>
+      <div class="list" id="schedule"></div>
+    </div>
+
+    <div class="card tasks">
+      <div class="section-title">
+        <span>今日の学習</span>
+        <button onclick="openEditor('tasks')">編集</button>
+      </div>
+      <div class="list" id="tasks"></div>
+    </div>
+
+    <div class="card">
+      <div class="ticker">
+        <span class="label">INFO</span>
+        <span class="text" id="infoText">前に立つと画面が点灯します。Googleカレンダー連携は次の段階で追加できます。</span>
+      </div>
+    </div>
+  </section>
+</div>
+
+
+<div class="modal" id="modal">
+  <div class="editor">
+    <h3 id="editorTitle">編集</h3>
+    <textarea id="editorText"></textarea>
+    <div class="editor-actions">
+      <button onclick="closeEditor()">キャンセル</button>
+      <button onclick="saveEditor()">保存</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CONFIG = {
+  city: "大阪",
+  latitude: 34.6937,
+  longitude: 135.5023
+};
+
+let editing = null;
+
+function pad(n){ return String(n).padStart(2,'0'); }
+
+function buildClock(){
+  const c = document.getElementById('analog');
+  for(let i=0;i<12;i++){
+    const t=document.createElement('div');
+    t.className='tick'+(i%3===0?' major':'');
+    t.style.transform=`translate(-50%,-50%) rotate(${i*30}deg)`;
+    c.appendChild(t);
+  }
+  ['hour','minute','second'].forEach(k=>{
+    const h=document.createElement('div'); h.className='hand '+k; h.id=k+'Hand'; c.appendChild(h);
+  });
+}
+
+function updateClock(){
+  const n=new Date();
+  const days=['日曜日','月曜日','火曜日','水曜日','木曜日','金曜日','土曜日'];
+  document.getElementById('date').textContent=`${n.getFullYear()}年${n.getMonth()+1}月${n.getDate()}日`;
+  document.getElementById('weekday').textContent=days[n.getDay()];
+  document.getElementById('hhmm').textContent=`${pad(n.getHours())}:${pad(n.getMinutes())}`;
+  document.getElementById('ss').textContent=`:${pad(n.getSeconds())}`;
+  const s=n.getSeconds(), m=n.getMinutes()+s/60, h=(n.getHours()%12)+m/60;
+  document.getElementById('secondHand').style.transform=`rotate(${s*6}deg)`;
+  document.getElementById('minuteHand').style.transform=`rotate(${m*6}deg)`;
+  document.getElementById('hourHand').style.transform=`rotate(${h*30}deg)`;
+}
+
+function monthTable(date){
+  const y=date.getFullYear(), m=date.getMonth();
+  const first=new Date(y,m,1), last=new Date(y,m+1,0);
+  const today=new Date();
+  let html=`<div><div class="month-title">${y}年 ${m+1}月</div><table><thead><tr>
+    <th class="sun">日</th><th>月</th><th>火</th><th>水</th><th>木</th><th>金</th><th class="sat">土</th>
+  </tr></thead><tbody>`;
+  let d=1, started=false;
+  for(let r=0;r<6;r++){
+    html+='<tr>';
+    for(let c=0;c<7;c++){
+      if(!started && r===0 && c===first.getDay()) started=true;
+      if(started && d<=last.getDate()){
+        const isToday=y===today.getFullYear()&&m===today.getMonth()&&d===today.getDate();
+        const cls=[c===0?'sun':'',c===6?'sat':'',isToday?'today':''].join(' ');
+        html+=`<td class="${cls}">${d}</td>`; d++;
+      }else html+='<td></td>';
+    }
+    html+='</tr>';
+    if(d>last.getDate()) break;
+  }
+  html+='</tbody></table></div>';
+  return html;
+}
+
+function renderCalendars(){
+  const n=new Date();
+  const next=new Date(n.getFullYear(), n.getMonth()+1, 1);
+  document.getElementById('calendars').innerHTML=monthTable(n)+monthTable(next);
+}
+
+const WMO = {
+  0:["☀️","快晴"],1:["🌤️","晴れ"],2:["⛅","晴れ時々くもり"],3:["☁️","くもり"],
+  45:["🌫️","霧"],48:["🌫️","霧"],
+  51:["🌦️","弱い霧雨"],53:["🌦️","霧雨"],55:["🌧️","強い霧雨"],
+  61:["🌦️","弱い雨"],63:["🌧️","雨"],65:["🌧️","強い雨"],
+  71:["🌨️","弱い雪"],73:["🌨️","雪"],75:["❄️","強い雪"],
+  80:["🌦️","にわか雨"],81:["🌧️","にわか雨"],82:["⛈️","激しいにわか雨"],
+  95:["⛈️","雷雨"],96:["⛈️","雷雨"],99:["⛈️","激しい雷雨"]
+};
+function wx(code){ return WMO[code] || ["🌡️","天気"]; }
+
+async function loadWeather(){
+  try{
+    const u=`https://api.open-meteo.com/v1/forecast?latitude=${CONFIG.latitude}&longitude=${CONFIG.longitude}`+
+      `&current=temperature_2m,apparent_temperature,weather_code,relative_humidity_2m,wind_speed_10m`+
+      `&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_probability_max`+
+      `&timezone=Asia%2FTokyo&forecast_days=4`;
+    const r=await fetch(u);
+    const j=await r.json();
+    const [icon,label]=wx(j.current.weather_code);
+    document.getElementById('wx-icon').textContent=icon;
+    document.getElementById('temp').textContent=Math.round(j.current.temperature_2m)+'°';
+    document.getElementById('condition').textContent=label;
+    document.getElementById('weather-meta').textContent=
+      `体感 ${Math.round(j.current.apparent_temperature)}°　湿度 ${j.current.relative_humidity_2m}%　風 ${Math.round(j.current.wind_speed_10m)}km/h`;
+    const now=new Date();
+    document.getElementById('weather-updated').textContent=`${pad(now.getHours())}:${pad(now.getMinutes())} 更新`;
+    let f='';
+    for(let i=1;i<4;i++){
+      const dt=new Date(j.daily.time[i]+'T00:00:00+09:00');
+      const [ic]=wx(j.daily.weather_code[i]);
+      const dn=['日','月','火','水','木','金','土'][dt.getDay()];
+      f+=`<div class="day"><div class="d">${dt.getMonth()+1}/${dt.getDate()} (${dn})</div>
+        <div class="i">${ic}</div><div class="t">${Math.round(j.daily.temperature_2m_max[i])}° / ${Math.round(j.daily.temperature_2m_min[i])}°</div>
+        <div class="d">降水 ${j.daily.precipitation_probability_max[i] ?? '-'}%</div></div>`;
+    }
+    document.getElementById('forecast').innerHTML=f;
+    
+  }catch(e){
+    document.getElementById('condition').textContent='天気を取得できませんでした';
+    document.getElementById('weather-updated').textContent='オフライン';
+    
+  }
+}
+
+const defaults = {
+  schedule:
+`10:20|大学・授業|予定は「編集」から変更できます
+16:40|授業終了|
+18:00|自由時間|`,
+  tasks:
+`0|今日のメイン教材を進める
+0|英語のハノン
+0|Anki
+0|英語論文を読む`
+};
+
+function getData(k){ return localStorage.getItem('dash_'+k) ?? defaults[k]; }
+
+function renderSchedule(){
+  const el=document.getElementById('schedule');
+  const lines=getData('schedule').split('\n').filter(x=>x.trim());
+  if(!lines.length){el.innerHTML='<div class="empty">予定はありません</div>';return}
+  el.innerHTML=lines.map(line=>{
+    const [time,what='',sub='']=line.split('|');
+    return `<div class="item"><div class="when">${escapeHtml(time)}</div><div><div class="what">${escapeHtml(what)}</div>${sub?`<div class="sub">${escapeHtml(sub)}</div>`:''}</div></div>`;
+  }).join('');
+}
+
+function renderTasks(){
+  const el=document.getElementById('tasks');
+  const lines=getData('tasks').split('\n').filter(x=>x.trim());
+  if(!lines.length){el.innerHTML='<div class="empty">学習タスクはありません</div>';return}
+  el.innerHTML=lines.map((line,i)=>{
+    const p=line.split('|'); const done=p.shift()==='1'; const text=p.join('|');
+    return `<div class="item ${done?'done':''}" onclick="toggleTask(${i})"><div class="check"></div><div class="what">${escapeHtml(text)}</div></div>`;
+  }).join('');
+}
+
+function toggleTask(index){
+  let lines=getData('tasks').split('\n').filter(x=>x.trim());
+  let p=lines[index].split('|'); p[0]=p[0]==='1'?'0':'1'; lines[index]=p.join('|');
+  localStorage.setItem('dash_tasks',lines.join('\n')); renderTasks();
+}
+
+function escapeHtml(s){ return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m])); }
+
+function openEditor(k){
+  editing=k;
+  document.getElementById('editorTitle').textContent = k==='schedule' ? '今日の予定を編集' : '今日の学習を編集';
+  document.getElementById('editorText').value=getData(k);
+  document.getElementById('modal').classList.add('show');
+}
+function closeEditor(){ document.getElementById('modal').classList.remove('show'); editing=null; }
+function saveEditor(){
+  if(!editing)return;
+  localStorage.setItem('dash_'+editing,document.getElementById('editorText').value);
+  editing==='schedule'?renderSchedule():renderTasks();
+  closeEditor();
+}
+
+buildClock(); updateClock(); setInterval(updateClock,1000);
+renderCalendars(); setInterval(renderCalendars,60*60*1000);
+renderSchedule(); renderTasks();
+loadWeather(); setInterval(loadWeather,15*60*1000);
+</script>
+</body>
+</html>
